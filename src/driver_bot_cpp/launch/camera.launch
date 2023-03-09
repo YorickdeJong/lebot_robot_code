@@ -1,0 +1,7 @@
+<!-- name is the name of the node, set with node.init, type is the executable -->
+<launch>
+  <node name="image_publisher"          pkg="driver_bot_cpp"  type="camera_node" output="screen"/>
+  <node name="qrCodeDetection"          pkg="driver_bot_cpp"  type="qr_code_detection_node" output="screen"/>
+  <node name="qrRoundPublisher"         pkg="driver_bot_cpp"  type="send_round" output="screen"/>
+  <node name="qrPowerUp"                pkg="driver_bot_cpp"  type="send_powerUp" output="screen"/>
+</launch>

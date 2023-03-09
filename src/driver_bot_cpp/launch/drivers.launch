@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find rplidar_ros)/launch/rplidar.launch" />
+  <node name="distance"          pkg="driver_bot_cpp"  type="rplidar_node" output="screen"/>
+  <node name="angleDetection"          pkg="driver_bot_cpp"  type="angle_node" output="screen"/>
+  <node name="distanceDetection"          pkg="driver_bot_cpp"  type="distance_node" output="screen"/>
+  <node name="runScript"          pkg="driver_bot_cpp"  type="run_node" output="screen"/>
+</launch>
