@@ -1,0 +1,9 @@
+float64[] time
+float64[] timeVelocity
+float64[] timeEnergy
+float32[] distance 
+float32[] distanceForce
+float32[] velocity
+float32[] force
+float32[] energy
+string type

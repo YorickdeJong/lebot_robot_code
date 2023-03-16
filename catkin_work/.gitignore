@@ -1,0 +1,57 @@
+
+## Javascript
+# Ignore node_modules directory
+node_modules/
+
+# Ignore log files
+*.log
+
+# Ignore environment variables
+.env
+.env.*
+
+# Ignore build artifacts
+build/
+dist/
+
+# Ignore object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Ignore precompiled headers
+*.gch
+*.pch
+
+# Ignore static libraries
+*.a
+*.lib
+
+# Ignore compiled dynamic libraries
+*.so
+*.dylib
+
+# Ignore compiled executables
+*.exe
+*.out
+*.app
+
+# Ignore build directories
+bin/
+devel/
+
+##Python
+# Ignore pycache directories
+__pycache__/
+*.pyc
+
+# Ignore environment variables
+.venv
+venv
+env
+*.pyc
+__pycache__/
+
+# Ignore build directories
+dist/

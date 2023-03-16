@@ -1,0 +1,5 @@
+<launch>
+  <node name="distance"          pkg="driver_bot_cpp"  type="rplidar_node" output="screen"/>
+  <node name="calibration"          pkg="driver_bot_cpp"  type="calibrate" output="screen"/>
+  <node name="plotData"          pkg="driver_bot_cpp"  type="plotCalibrationData.py" output="screen"/>
+</launch>

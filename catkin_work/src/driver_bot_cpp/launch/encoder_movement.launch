@@ -1,0 +1,17 @@
+<launch>
+  <arg name="vel_max" default="10" />
+  <arg name="vel_ramp" default="10" />
+
+  <node name="keys_move" pkg="driver_bot_cpp" type="keys_move" output="screen">
+      <param name="velMax" value="$(arg vel_max)" />
+      <param name="velRamp"  value="$(arg vel_ramp)" />
+  </node>
+  
+  <!-- Movement Related -->
+  <node name="keys_publisher" pkg="driver_bot_cpp" type="keys_publisher" output="screen"/>
+  <node name="encoder_node"          pkg="driver_bot_cpp"  type="encoder_node" output="screen"/>
+  
+  <!-- Plotting Data Related -->
+  <node name="plot_data_transformation_node"          pkg="driver_bot_cpp"  type="plot_data_transformation_node" output="screen"/>
+  <node name="connection_plot_to_app_node"          pkg="driver_bot_cpp"  type="connection_plot_to_app_node.js" output="screen"/>
+</launch>
