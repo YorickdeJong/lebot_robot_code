@@ -1,9 +1,7 @@
 float64[] time
-float64[] timeVelocity
-float64[] timeEnergy
-float32[] distance 
-float32[] distanceForce
-float32[] velocity
-float32[] force
-float32[] energy
+std_msgs/Float32MultiArray[] distance
+std_msgs/Float32MultiArray[] velocity
+std_msgs/Float32MultiArray[] force
+std_msgs/Float32MultiArray[] energy
+int32[] motorNumber
 string type

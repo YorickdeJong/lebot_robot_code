@@ -57,3 +57,10 @@ sudo apt-get install gnome-terminal -y
 - sudo su root 
 - source devel/setup.bash
 - rosrun driver_bot_cpp generalInterface
+
+
+---------------- power ------------------
+1. sudo apt-get install libcap2 libcap-dev
+2. navigate to support classes
+3. sudo setcap cap_sys_rawio+ep INA219.cpp
+4. sudo setcap cap_sys_rawio+ep ADS1115.cpp

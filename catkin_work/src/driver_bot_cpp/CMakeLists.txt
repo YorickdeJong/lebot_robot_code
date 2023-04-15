@@ -23,6 +23,7 @@ add_message_files(
   qrCode.msg
   images.msg
   distanceData.msg
+  keyStrokes.msg
 )
 
 generate_messages(
@@ -51,6 +52,10 @@ include_directories(nodes/include)
 include_directories(general_interface/include)
 include_directories(support_classes/include)
 
+add_executable(controll_motor assignment_one/controll_motor.cpp)
+target_link_libraries(controll_motor ${catkin_LIBRARIES} motordriverlib)
+add_dependencies(controll_motor driver_bot_cpp_generate_messages_cpp)
+
 add_executable(camera_node nodes/src/Sensors/camera_node.cpp )
 target_link_libraries(camera_node ${OpenCV_LIBS} ${catkin_LIBRARIES}) 
 add_dependencies(camera_node driver_bot_cpp_generate_messages_cpp)
@@ -59,11 +64,6 @@ add_dependencies(camera_node driver_bot_cpp_generate_messages_cpp)
 add_executable(cameraSub_node nodes/src/Sensors/camera_Subscriber.cpp )
 target_link_libraries(cameraSub_node ${OpenCV_LIBS} ${catkin_LIBRARIES}) 
 add_dependencies(cameraSub_node driver_bot_cpp_generate_messages_cpp)
-
-
-add_executable(calibrate nodes/src/Calibrate/calibrate.cpp)
-target_link_libraries(calibrate ${catkin_LIBRARIES} angledistancelib actionslib) 
-add_dependencies(calibrate driver_bot_cpp_generate_messages_cpp)
 
 
 add_executable(rplidar_node nodes/src/Sensors/rplidar_node.cpp )
@@ -123,6 +123,17 @@ add_executable(keys_publisher driving_on_command/src/keys_publisher.cpp )
 target_link_libraries(keys_publisher ${catkin_LIBRARIES}) 
 add_dependencies(keys_publisher driver_bot_cpp_generate_messages_cpp)
 
+
+####------- key publishers TEST-------#####
+add_executable(key_move_test test_drive/src/key_movement_test.cpp )
+target_link_libraries(key_move_test ${catkin_LIBRARIES} actionslib) 
+add_dependencies(key_move_test driver_bot_cpp_generate_messages_cpp)
+
+add_executable(key_publisher_test test_drive/src/key_publisher_test.cpp )
+target_link_libraries(key_publisher_test ${catkin_LIBRARIES}) 
+add_dependencies(key_publisher_test driver_bot_cpp_generate_messages_cpp)
+
+
 ##-------------- Publish data Plots -------------------##
 add_executable(plot_data_transformation_node nodes/src/plots/plot_data_transformation_node.cpp )
 target_link_libraries(plot_data_transformation_node ${catkin_LIBRARIES} angledistancelib) 
@@ -132,3 +143,8 @@ add_dependencies(plot_data_transformation_node driver_bot_cpp_generate_messages_
 add_executable(encoder_node nodes/src/plots/encoder_node.cpp )
 target_link_libraries(encoder_node ${catkin_LIBRARIES} ${WIRINGPI_LIB})
 add_dependencies(encoder_node driver_bot_cpp_generate_messages_cpp)
+
+#--------------- Power Data -------------------#
+add_executable(power_node nodes/src/power/power_node.cpp )
+target_link_libraries(power_node ${catkin_LIBRARIES} powerlib)
+add_dependencies(power_node driver_bot_cpp_generate_messages_cpp)

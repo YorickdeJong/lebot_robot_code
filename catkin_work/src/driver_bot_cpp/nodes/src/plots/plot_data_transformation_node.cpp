@@ -1,14 +1,15 @@
 #include "plot_data_transformation_node.h"
 
 DataTransformationPlot::DataTransformationPlot()
-: m_subDistance{m_node.subscribe("distanceData", 2, &DataTransformationPlot::DistanceCallback, this)},
-m_subStopNode{m_node.subscribe("stopNode", 2, &DataTransformationPlot::StopNodeCallback, this)},
-m_pubData{m_node.advertise<driver_bot_cpp::distanceVelocity>("deviceData", 2)},
+: m_subDistance{m_node.subscribe("distanceData", 10, &DataTransformationPlot::DistanceCallback, this)},
+m_subStopNode{m_node.subscribe("stopNode", 10, &DataTransformationPlot::StopNodeCallback, this)},
+m_pubData{m_node.advertise<driver_bot_cpp::distanceVelocity>("deviceData", 10)},
 m_beginTime{ros::Time::now().toSec()}, 
-m_stopNode{false},
+m_stopNode{false}, m_setMotors{true},
 m_operationsDistance{ANGLE_ONE_DOMAIN_AT_FRONT_OF_ROBOT, ANGLE_TWO_DOMAIN_AT_FRONT_OF_ROBOT},
-m_adjustTimeToStartAtZero{0},
-m_velocity{0}, m_force{0}, m_energy{0}, m_timeVelocity{0}, m_timeEnergy{0}, m_distanceForce{0}, m_rate{2}
+m_adjustTimeToStartAtZero{0}, m_rate{7}, 
+m_velocity{4, std::vector<float>(1, -10000.0)}, m_force{4, std::vector<float>(1, -10000.0)}, 
+m_energy{4, std::vector<float>(1, -10000.0)}, m_distance{4, std::vector<float>(1, -10000.0)}
 {
     /* Constructor for the DataTransformationPlot class
     * Args:
@@ -37,6 +38,15 @@ void DataTransformationPlot::DistanceCallback(const driver_bot_cpp::distanceData
     /* Callback reads msg data which contains information about the distance of all the objects in a 360 degree 2D view
     * The callback then calculates the minimum distance of the objects in a specific range of angles and publishes the data
     */
+    // //check if connnection_to_app_node is subscribed to the topic
+    
+    if (m_pubData.getNumSubscribers() < 1) {
+    // wait for a connection to publisher, since we only publish the message once
+        std::cout << "CONNECTION TO APP NODE NOT YET ESTABLISHED " << std::endl;
+        return;
+    }
+    
+    
     double currentTime = ros::Time::now().toSec(); 
 
     //TODO change data for lidar to fit the distanceData message
@@ -45,181 +55,243 @@ void DataTransformationPlot::DistanceCallback(const driver_bot_cpp::distanceData
         m_type = msg->type;
     }
 
+
+    if (msg -> distance[0] != -10000.0){
+        if (m_distance[0][0] == -10000.0){
+            m_distance[0][0] = msg -> distance[0]; 
+        }
+        else{
+            m_distance[0].emplace_back(msg -> distance[0]); //change to distanceM2
+        }
+    }
+
+    if (msg -> distance[1] != -10000.0){
+        if (m_distance[1][0] == -10000.0){
+            m_distance[1][0] = msg -> distance[1]; 
+        }
+        else{
+            m_distance[1].emplace_back(msg -> distance[1]); //change to distanceM2
+        }
+    }
+
+    if (msg -> distance[2] != -10000.0){
+        std::cout << "check" << std::endl;
+        if (m_distance[2][0] == -10000.0){
+            m_distance[2][0] = msg -> distance[2]; 
+        }
+        else{
+            m_distance[2].emplace_back(msg -> distance[2]); //change to distanceM2
+        }
+    }
+
+    if (msg -> distance[3] != -10000.0){
+        if (m_distance[3][0] == -10000.0){
+            m_distance[3][0] = msg -> distance[3]; 
+        }
+        else{
+            m_distance[3].emplace_back(msg -> distance[3]); //change to distanceM2
+        }
+    }
+
     if (m_adjustTimeToStartAtZero == 0.0) {
         m_adjustTimeToStartAtZero = currentTime - m_beginTime;
     }
 
+    // remove elements untill the 
     m_time.emplace_back(currentTime - m_beginTime - m_adjustTimeToStartAtZero);
-    m_distance.emplace_back(msg -> distance);
-
+  
+    //Publish the data immidiately once the message is received
+    PublishData();
 }   
 
-
+// With a starting value of  0 -> 0 time steps behind
 void DataTransformationPlot::VelocityCalculation()
 {
-    /* Function calculates velocity based on time and distance
-    * Args:
-    *   time: array containing time values
-    *   distance: array containing distance values
-    * Returns:
-    *   velocity: array containing velocity values
-    */
-
-    if (m_distance.size() <= 2) {
-        // there are not enough elements in m_distance to calculate velocity
-        std::cout << "NOT ENOUGH ELEMENTS IN m_distance TO CALCULATE VELOCITY IN TRANSFORMATION_NODE" << std::endl;
-        return;
-    } 
-    else if (m_distance.size() - 1 > m_velocity.max_size()) {
-        std::cout << "TOO MANY ELEMENTS TO RESIZE m_velocity IN TRANSFORMATION_NODE" << std::endl;
+    if (m_time.size() < 3) {
+        std::cout << "NOT ENOUGH ELEMENTS IN m_time TO CALCULATE VELOCITY IN TRANSFORMATION_NODE" << std::endl;
         return;
     }
 
-    
-    // Set the interval size to 5 data points
-    const int interval_size = 1;
+    float new_velocity;
+    int column;
+    //looping over rows
+    for (size_t row = 0; row < m_velocity.size(); ++row) {
+        std:: cout << "m_distance[row].size() " << m_distance[row].size() << std::endl;
 
-    float sum_distance = 0.0;
-    double sum_time = 0.0;
-    for (size_t i = m_distance.size() - 1; i < m_distance.size(); i++) {
-        // Calculate the sum of distances and times in the current interval
-        for (size_t j = 0; j < interval_size; j++) {
-            sum_distance += m_distance[i + j] - m_distance[i + j - 1];
-            sum_time += m_time[i + j] - m_time[i + j -1];
-        }
-
-        std::cout << "sum distance: " << sum_distance << std::endl;
-        std::cout << "sum time: " << sum_time << std::endl;
-
-        if (sum_distance == 0.0 || sum_time == 0.0) {
-            // If the sum of distances or times is 0, the velocity is 0
-            m_velocity.emplace_back(0.0);
-            m_timeVelocity.emplace_back(m_timeEnergy.back()  + 1.0 / m_rate);
+        // not enough elements
+        if (m_distance[row].size() <= 2){
+            std::cout << "NOT ENOUGH ELEMENTS IN m_distance TO CALCULATE VELOCITY IN TRANSFORMATION_NODE" << std::endl;
             continue;
         }
 
-        // Calculate the average velocity over the current interval and add it to the velocity array
-        m_velocity.emplace_back(fabs(sum_distance / sum_time));
-        m_timeVelocity.emplace_back(m_timeEnergy.back()  + 1.0 / m_rate);
+        // check if the same size
+        if (m_distance[row].size() != m_time.size()){
+            std::cout << "m_distance and m_time are not the same size" << std::endl;
+            continue;
+        }
 
-        std::cout << "velocity size: " << m_velocity.size() << std::endl;
-        // Reset the sum of distances and times for the next interval
-        sum_distance = 0.0;
-        sum_time = 0.0;
+        //next element calculation
+        column = m_distance[row].size() - 2; //minus 2 since size starts at 1 and we are looking at the next element with column + 1
+        float distance_diff = m_distance[row][column + 1] - m_distance[row][column];
+        double time_diff = m_time[column + 1] - m_time[column];
+      
+
+
+        // If the sum of distances or times is 0, the velocity is 0
+        if (distance_diff == 0.0 || time_diff == 0.0) {
+            new_velocity = 0.0;
+        }
+        else{
+            new_velocity = distance_diff / time_diff;
+        }
+
+        // Replace the -10000 value if present
+        if (m_velocity[row][0] == -10000.0) {
+            m_velocity[row][0] = 0.0;
+            m_velocity[row].emplace_back(new_velocity);
+        } 
+        else {
+            m_velocity[row].emplace_back(new_velocity);
+        }
     }
 
 
-    // Calculate the time intervals for the velocity plot
-    
-    for (size_t i = 0; i < m_timeVelocity.size(); i++) {
-        std::cout << "time velocity: " << m_timeVelocity[i] << std::endl;
+    for (int j {0}; j < m_velocity.size(); j++){
+        for (int i{0}; i < m_velocity[j].size(); ++i) {
+            std::cout << "m_velocity " << j << " " << i << " " << m_velocity[j][i] << std::endl;
+        }
     }
 }
 
+// With a starting value of  0 -> 1 time steps behind
 void DataTransformationPlot::ForceCalculation()
 {
-    /* Function calculates velocity based on time and distance
-    * Args:
-    *   time: array containing time values
-    *   distance: array containing distance values
-    * Returns:
-    *   velocity: array containing velocity values
-    */
-
-    if (m_velocity.size() <= 2) {
-        // there are not enough elements in m_distance to calculate velocity
-        std::cout << "NOT ENOUGH ELEMENTS IN m_velocity TO CALCULATE VELOCITY IN TRANSFORMATION_NODE" << std::endl;
-        return;
-    } 
-    else if (m_velocity.size() - 1 > m_force.max_size()) {
-        std::cout << "TOO MANY ELEMENTS TO RESIZE m_force IN TRANSFORMATION_NODE" << std::endl;
+    if (m_time.size() < 3) {
+        std::cout << "NOT ENOUGH ELEMENTS IN m_time TO CALCULATE FORCE IN TRANSFORMATION_NODE" << std::endl;
         return;
     }
 
-    // Set the interval size to 5 data points
-    const int interval_size = 1;
     const float mass = 0.5;  // mass of the car in kg
+    float new_force;
 
-    float sum_velocity = 0.0;
-    double sum_time = 0.0;
-    for (size_t i = m_velocity.size() - 1; i < m_velocity.size(); i++) {
-        // Calculate the sum of distances and times in the current interval
-        for (size_t j = 0; j < interval_size; j++) {
-            sum_velocity += m_velocity[i + j] - m_velocity[i + j - 1];
-            sum_time += m_timeVelocity[i + j] - m_timeVelocity[i + j - 1];
+    for (size_t row = 0; row < m_force.size(); ++row) {
+
+        if (m_distance[row].size() <= 2){
+            std::cout << "NOT ENOUGH ELEMENTS IN m_distance TO CALCULATE FORCE IN TRANSFORMATION_NODE" << std::endl;
+            continue;
         }
 
-        // Calculate the average velocity over the current interval and add it to the velocity array
-
-        if (sum_time == 0.0 || sum_velocity == 0.0){
-            m_force.emplace_back(0.0);
-            m_distanceForce.emplace_back(m_distanceForce.back() + 0);
-            return;
+        if (m_distance[row].size() != m_time.size()){
+            std::cout << "m_distance and m_time are not the same size" << std::endl;
+            continue;
         }
-        m_force.emplace_back(sum_velocity / sum_time * mass);
-        m_distanceForce.emplace_back(m_distanceForce.back() + sum_velocity * sum_time);
 
-        // Reset the sum of distances and times for the next interval
-        sum_velocity = 0.0;
-        sum_time = 0.0;
+        int column = m_distance[row].size() - 2;
+        float distance_diff1 = m_distance[row][column] - m_distance[row][column - 1];
+        float distance_diff2 = m_distance[row][column + 1] - m_distance[row][column];
+        double time_diff1 = m_time[column] - m_time[column - 1];
+        double time_diff2 = m_time[column + 1] - m_time[column];
+        float acceleration = (distance_diff2 - distance_diff1) / (time_diff1 + time_diff2);
+        new_force = mass * acceleration;
+
+        // Replace the -10000 value if present or add initial force as zero
+        if (m_force[row][0] == -10000.0) {
+            m_force[row][0] = 0.0;
+            m_force[row].emplace_back(new_force);
+        }
+        else {
+            m_force[row].emplace_back(new_force);
+        }
     }
 
-    // Calculate the distance intervals for the force plot
-
+    for (int j {0}; j < m_force.size(); j++){
+        for (int i{0}; i < m_force[j].size(); ++i) {
+            std::cout << "m_force " << j << " " << i << " " << m_force[j][i] << std::endl;
+        }
+    }
 }
 
-
-
+// With a starting value of  0 -> 2 time steps behind
 void DataTransformationPlot::EnergyCalculation()
 {
-    /* Function calculates velocity based on time and distance
-    * Args:
-    *   time: array containing time values
-    *   distance: array containing distance values
-    * Returns:
-    *   velocity: array containing velocity values
-    */
-
-    if (m_force.size() <= 2) {
-        // there are not enough elements in m_distance to calculate velocity
-        std::cout << "NOT ENOUGH ELEMENTS IN m_force TO CALCULATE VELOCITY IN TRANSFORMATION_NODE" << std::endl;
-        return;
-    } 
-    else if (m_force.size() - 1 > m_energy.max_size()) {
-        std::cout << "TOO MANY ELEMENTS TO RESIZE m_energy IN TRANSFORMATION_NODE" << std::endl;
+    if (m_time.size() < 3) {
+        std::cout << "NOT ENOUGH ELEMENTS IN m_time TO CALCULATE ENERGY IN TRANSFORMATION_NODE" << std::endl;
         return;
     }
 
-    // Set the interval size to 5 data points
-    const int interval_size = 1;
+    float new_energy;
+    for (size_t row = 0; row < m_energy.size(); ++row) {
 
-    float sum_force = 0.0;
-    float sum_distance = 0.0;
-    for (size_t i = m_force.size() - 1; i < m_force.size(); i++) {
-        // Calculate the sum of distances and times in the current interval
-        for (size_t j = 0; j < interval_size; j++) {
-            sum_force += m_force[i + j] - m_force[i + j - 1];
-            sum_distance += m_distanceForce[i + j] - m_distanceForce[i + j - 1];
+        if (m_force[row].size() <= 2){
+            std::cout << "NOT ENOUGH ELEMENTS IN m_force TO CALCULATE ENERGY IN TRANSFORMATION_NODE" << std::endl;
+            continue;
         }
 
-        if (sum_force == 0.0 || sum_distance == 0.0){
-            m_energy.emplace_back(0.0);
-            m_timeEnergy.emplace_back(m_timeEnergy.back()  + 1.0 / m_rate);
-            return;
+        if (m_force[row].size() != m_distance[row].size() - 1){
+            std::cout << "m_force and m_time are not the same size" << std::endl;
+            std::cout << "m_force[row].size() " << m_force[row].size() << std::endl;
+            std::cout << "m_distance[row].size() " << m_distance[row].size() << std::endl;
+            continue;
         }
 
-        // Calculate the average velocity over the current interval and add it to the velocity array
-        m_energy.emplace_back(sum_force * sum_distance);
-        m_timeEnergy.emplace_back(m_timeEnergy.back()  + 1.0 / m_rate);
+        int column = m_force[row].size() - 2;
+        float force_avg = (m_force[row][column] + m_force[row][column + 1]) / 2;
+        float distance_diff = m_distance[row][column + 1] - m_distance[row][column - 1]; // extra + 1 here to be conform with the force 
+        new_energy = force_avg * distance_diff;
 
-        // Reset the sum of distances and times for the next interval
-        sum_force = 0.0;
-        sum_distance = 0.0;
+        // Replace the -10000 value if present
+        if (m_energy[row][0] == -10000.0) {
+            m_energy[row][0] = 0.0; //initial energy -> object starts at rest
+            m_energy[row].emplace_back(new_energy);
+        } 
+        else {
+            m_energy[row].emplace_back(new_energy);
+        }
     }
 
-    // Calculate the time intervals for the velocity plot
-
+    for (int j {0}; j < m_energy.size(); j++){
+        for (int i{0}; i < m_energy[j].size(); ++i) {
+            std::cout << "m_energy " << j << " " << i << " " << m_energy[j][i] << std::endl;
+        }
+    }
+    std::cout << "energy size: " << m_energy[1].size() << std::endl;
+    std::cout << "m_time size: " << m_time.size() << std::endl;
 }
+
+std::vector<std_msgs::Float32MultiArray> DataTransformationPlot::filterAndConvertVector(std::vector<std::vector<float>>& data) {
+    std::vector<std_msgs::Float32MultiArray> output;
+
+    int count = 0;
+
+    for (const auto& row : data) {
+        bool has_real_data = true;
+        for (float value : row) {
+            if (value == -10000.0) {
+                has_real_data = false;
+                break;
+            }
+        }
+        
+        // increase motor number 
+        count++;
+
+        if (has_real_data) { // TODO: should not be necassary if we define the vectors as Float32MultiArray right away
+            if (m_setMotors){
+                m_motorNumber.emplace_back(count); // append motor number to vector if it has real data
+            }
+            std_msgs::Float32MultiArray row_msg;
+            for (const float& element : row) {
+                row_msg.data.emplace_back(element);
+            }
+            output.emplace_back(row_msg);
+        }
+    }
+
+    m_setMotors = false;
+    
+    return output;
+}
+
 
 void DataTransformationPlot::PublishData()
 {
@@ -234,28 +306,24 @@ void DataTransformationPlot::PublishData()
     ForceCalculation();
     EnergyCalculation();
     
-    if (m_time.size() == 0 || m_distance.size() == 0 || m_velocity.size() == 0) {
+    if (m_time.size() == 0) {
         std::cout << "NO DATA TO PUBLISH IN TRANSFORMATION NODE" << std::endl;
         return;
     }
-
     
-
     driver_bot_cpp::distanceVelocity msg;
     msg.time = m_time;
-    msg.timeVelocity = m_timeVelocity;
-    msg.timeEnergy = m_timeEnergy;
-    msg.distance = m_distance;
-    msg.distanceForce = m_distanceForce;
-    msg.velocity = m_velocity;
-    msg.force = m_force;
-    msg.energy = m_energy;
+    msg.distance = filterAndConvertVector(m_distance);
+    msg.velocity = filterAndConvertVector(m_velocity);
+    msg.force = filterAndConvertVector(m_force);
+    msg.energy = filterAndConvertVector(m_energy);
+
+    msg.motorNumber = m_motorNumber;
     msg.type = m_type;
-
-
     m_pubData.publish(msg);
     std::cout << "PUBLISHED DATA IN TRANSFORMATION NODE" << std::endl;
-    // ClearData();
+
+    
 }
 
 
@@ -265,8 +333,6 @@ void DataTransformationPlot::run()
 
     while (ros::ok() && !m_stopNode)
     {
-        PublishData();
-
         rate.sleep();
         ros::spinOnce();
     }
@@ -277,10 +343,7 @@ void DataTransformationPlot::ClearData()
 {
     /*Cleares vectors such that they don't contain data for the next calibration*/
     m_time.clear();
-    m_timeVelocity.clear();
-    m_timeEnergy.clear();
     m_distance.clear();
-    m_distanceForce.clear();
     m_velocity.clear();
     m_force.clear();
     m_energy.clear();
@@ -293,4 +356,5 @@ int main(int argc, char **argv)
     DataTransformationPlot dataTransformationPlot;
     dataTransformationPlot.run();
     return 0;
+
 }

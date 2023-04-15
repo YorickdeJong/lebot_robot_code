@@ -1,0 +1,9 @@
+<launch>
+  <node name="keys_move" pkg="driver_bot_cpp" type="key_move_test" output="screen" />
+
+  
+  <!-- Movement Related -->
+  <node name="keys_publisher" pkg="driver_bot_cpp" type="key_publisher_test" output="screen"/>
+  <node name="power_monitor_node"          pkg="driver_bot_cpp"  type="power_node.py" output="screen"/>
+  
+</launch>

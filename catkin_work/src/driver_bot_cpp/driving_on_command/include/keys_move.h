@@ -3,7 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <ros/ros.h>
-#include "std_msgs/String.h"
+#include "driver_bot_cpp/keyStrokes.h"
 #include "../../actions/include/actionsFactory.h"
 #include "../../motorImplementation/include/MotorDetails.h"
 
@@ -13,7 +13,7 @@ class KeysMove{
         KeysMove();
         ~KeysMove() = default;
 
-        void KeyStrokesCallback(const std_msgs::String::ConstPtr &msg);
+        void KeyStrokesCallback(const driver_bot_cpp::keyStrokes::ConstPtr &msg);
         void VelocityCalc();
 
     private:
@@ -24,7 +24,8 @@ class KeysMove{
         //define input maxSpeed and maxAcceleration
         double m_velMax;
         double m_velRamp;
-        
+        float m_velMaxPercentage;
+
         // Define the key mapping
         std::map<char, std::unique_ptr<ActionsInterface>> m_keyMapping;
 

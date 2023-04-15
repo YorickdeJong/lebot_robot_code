@@ -6,23 +6,27 @@ const measuredData = rosnodejs.require('driver_bot_cpp').msg.distanceVelocity;
 const recordId = uuidv4();
 let measurementStarted = false;
 let measurementStartingTime;
-let timeVelocityStartTime;
-let timeEnergyStartTime;
-let distanceForceStartDistace;
 
 class PlotSubscriber {
     constructor() {
         this.posted = false; // Initialize flag to false
+        this.userID = 1;
+        this.assignmentNumber = 1;
+        this.assignmentTitle = "Default Title";
     }
 
     init() {
         rosnodejs.initNode('connection_plot_to_app_node')
-            .then((rosNode) => {
+            .then(async (rosNode) => {
+                this.userID = await rosNode.getParam('/connection_plot_to_app_node/userID');
+                this.assignmentNumber = await rosNode.getParam('/connection_plot_to_app_node/assignmentNumber');
+                this.assignmentTitle = await rosNode.getParam('/connection_plot_to_app_node/assignmentTitle');
+                this.subjectTitle = await rosNode.getParam('/connection_plot_to_app_node/subjectTitle');
                 const subscriber = rosNode.subscribe(
                     'deviceData',
-                    measuredData,  // change to the correct message type
+                    measuredData,
                     this.onDataArrayMessage.bind(this),
-                    { queueSize: 1, throttle_rate: 500 }
+                    { queueSize: 1, throttle_rate: 100 }
                 );
 
             })
@@ -38,36 +42,40 @@ class PlotSubscriber {
             if (!measurementStarted) {
                 for (let i = 0; i < 15; i++) {
                     console.log("MEASUREMENT STARTED CONNECTION DATABASE ACTIVE");
+                    console.log(this.subjectTitle)
                 }
                 measurementStartingTime = measuredData.time[0]
-                timeVelocityStartTime = measuredData.timeVelocity[0]
-                timeEnergyStartTime = measuredData.timeEnergy[0]
-                distanceForceStartDistace = measuredData.distanceForce[0]
                 measurementStarted = true;
             }
+            console.log(measuredData.distance)
+            console.log(measuredData.motorNumber)
+            
+            const timeArray = measuredData.time;
+            const distanceArrays = measuredData.distance.map(multiArray => multiArray.data);
+            const velocityArrays = measuredData.velocity.map(multiArray => multiArray.data);
+            const forceArrays = measuredData.force.map(multiArray => multiArray.data);
+            const energyArrays = measuredData.energy.map(multiArray => multiArray.data);
+
             // Loop through the images in the array and send each one to the server
             try {
-                console.log(measuredData.timeVelocity)
-                const time = measuredData.time.map(t => t - measurementStartingTime); //Adjust for measurement startup time
-                return fetch(`http://172.20.10.2:3000/api/v1/measurement-results/${recordId}`, {
+                return fetch(`http://10.7.191.125:3001/api/v1/measurement-results/${recordId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         record_number: recordId,
-                        distance: measuredData.distance,
-                        velocity: measuredData.velocity,
-                        force: measuredData.force,
-                        energy: measuredData.energy,
-                        time: time,
-                        timeVelocity: measuredData.timeVelocity,
-                        timeEnergy: measuredData.timeEnergy,
-                        distanceForce: measuredData.distanceForce,
+                        distance: distanceArrays,
+                        velocity: velocityArrays,
+                        force: forceArrays,
+                        energy: energyArrays,
+                        time: timeArray,
+                        motor_number: measuredData.motorNumber,
                         type: measuredData.type,
-                        assignment_number: 1, // Change this to the actual assignment number
-                        user_id: 4, // Change this to the actual user profile ID
-                        title: 'Beweging', // Change this to the desired title
+                        assignment_number: this.assignmentNumber, // Change this to the actual assignment number
+                        user_id: this.userID, // Change this to the actual user profile ID
+                        title: this.assignmentTitle, // Change this to the desired title
+                        subject: this.subjectTitle,
                     })
                 })
                     .then(response => {
@@ -85,8 +93,6 @@ class PlotSubscriber {
 }
 const plotSubscriber = new PlotSubscriber();
 
-
-// setTimeout(() => {
 plotSubscriber.init();
-// }, 1000);
+
 

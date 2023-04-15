@@ -11,9 +11,11 @@ KeysMove::KeysMove()
     m_actions = actionsFactory.Create(MOTOR_TYPE);
 }
 
-void KeysMove::KeyStrokesCallback(const std_msgs::String::ConstPtr &msg) 
+void KeysMove::KeyStrokesCallback(const driver_bot_cpp::keyStrokes::ConstPtr &msg) 
 {
-    m_key = msg -> data;
+    m_key = msg -> keyStroke; //set v_max here based on the key input -> percentage of m_velMax
+    m_velMaxPercentage = msg -> velPercentage;
+    // read aout percentage value here and set it to m_velMaxPercentage
 }
 
 
@@ -34,44 +36,34 @@ void KeysMove::VelocityCalc()
 
         if (!m_key.empty())
         {
-            std::cout << "received key: " << m_key << std::endl;
             if (m_key == "w")
             {
                 m_actions -> DriveForward(v_prev);
-                std::cout << m_key << " pressed" << std::endl;
             }
             else if (m_key == "a")
             {
-                m_actions -> TurnLeft(v_prev);
-                std::cout << m_key << " pressed" << std::endl;
+                m_actions -> TurnLeft(v_prev / 2.0);
             }
             else if (m_key == "s")
             {
                 m_actions -> DriveBackward(v_prev);
-                std::cout << m_key << " pressed" << std::endl;
             }
             else if (m_key == "d")
             {
-                m_actions -> TurnRight(v_prev);
-                std::cout << m_key << " pressed" << std::endl;
+                m_actions -> TurnRight(v_prev / 2.0);
             }
             else if (m_key == "x")
             {
                 m_actions -> Stop();
-                std::cout << m_key << " pressed" << std::endl;
             }
             else if (m_key == "`")
             {
                 m_actions -> Stop();
-                std::cout << m_key << " pressed" << std::endl;
                 ros::shutdown();
-            }
-            else
-            {
-                std::cout << "please provide the correct key" << std::endl;
             }
         }
         m_key = "";
+
         //time difference
         ros::Duration dt = ros::Time::now() - lastTime;
 
@@ -81,8 +73,9 @@ void KeysMove::VelocityCalc()
         
         //check if we have overshoot or not
         bool sign;
-        
-        if (m_velMax > v_new)
+        float velmaxPercentage = m_velMaxPercentage * m_velMax;
+
+        if (velmaxPercentage > v_new) //replace m_velMax with the percentage of m_velMax
         {
             sign = 1.0;
         }  
@@ -92,9 +85,9 @@ void KeysMove::VelocityCalc()
         } 
 
 
-        if (m_velMax - v_new < step)
+        if (velmaxPercentage - v_new < step)
         {
-            v_new = m_velMax;
+            v_new = velmaxPercentage;
         }
         else
         {

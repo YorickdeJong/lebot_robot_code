@@ -1,0 +1,2 @@
+float32 velPercentage
+string keyStroke 

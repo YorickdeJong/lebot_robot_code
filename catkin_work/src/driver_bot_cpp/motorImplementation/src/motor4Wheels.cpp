@@ -37,10 +37,6 @@ void Motor4Wheels::SetMotorVelocity(const int velocity)
     m_motorLB -> setSpeed(scaledVelocity);
     m_motorRB -> setSpeed(scaledVelocity);    
 
-    std::cout << "Initialised motor velocity LF: " << m_motorLF << std::endl;
-    std::cout << "Initialised motor velocity RF: " << m_motorRF << std::endl;
-    std::cout << "Initialised motor velocity LB: " << m_motorLB << std::endl;
-    std::cout << "Initialised motor velocity RB: " << m_motorRB << std::endl;
 }
 
 float Motor4Wheels::Scale(const int velocity)

@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find rplidar_ros)/launch/rplidar.launch" />
+  <node name="keyboard_driver"          pkg="driver_bot_cpp"  type="key_publisher.py" output="screen"/>
+  <node name="keys_to_twist"          pkg="driver_bot_cpp"  type="keys_move.py" output="screen"/>
+</launch>

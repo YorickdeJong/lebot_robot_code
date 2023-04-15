@@ -13,5 +13,10 @@
   
   <!-- Plotting Data Related -->
   <node name="plot_data_transformation_node"          pkg="driver_bot_cpp"  type="plot_data_transformation_node" output="screen"/>
-  <node name="connection_plot_to_app_node"          pkg="driver_bot_cpp"  type="connection_plot_to_app_node.js" output="screen"/>
+   <node name="connection_plot_to_app_node"          pkg="driver_bot_cpp"  type="connection_plot_to_app_node.js" output="screen">
+      <param name="userID"  value="$(arg user_id)" />
+      <param name="assignmentNumber"  value="$(arg assignment_number)" />
+      <param name="assignmentTitle"  value="$(arg assignment_title)" />
+      <param name="subjectTitle"  value="$(arg subject_title)" />
+  </node>
 </launch>

@@ -23,10 +23,10 @@ void Actions4Wheels::DriveForward(const int velocity)
         velocity: velocity in the x direction of the vehicle in the robot frame
     */
     m_motor -> SetMotorVelocity(velocity);
-    m_motor -> SetCommandToMovementInXDirection(PIN_MOTOR_1, LOCATION_MOTOR_1, AdafruitDCMotor::kForward, AdafruitDCMotor::kBackward); 
-    m_motor -> SetCommandToMovementInXDirection(PIN_MOTOR_2, LOCATION_MOTOR_2, AdafruitDCMotor::kBackward, AdafruitDCMotor::kForward);
-    m_motor -> SetCommandToMovementInXDirection(PIN_MOTOR_3, LOCATION_MOTOR_3, AdafruitDCMotor::kForward, AdafruitDCMotor::kBackward);
-    m_motor -> SetCommandToMovementInXDirection(PIN_MOTOR_4, LOCATION_MOTOR_4, AdafruitDCMotor::kBackward, AdafruitDCMotor::kForward);
+    m_motor -> SetCommandToMovementInZDirection(PIN_MOTOR_1, LOCATION_MOTOR_1, AdafruitDCMotor::kForward, AdafruitDCMotor::kBackward); 
+    m_motor -> SetCommandToMovementInZDirection(PIN_MOTOR_2, LOCATION_MOTOR_2, AdafruitDCMotor::kForward, AdafruitDCMotor::kBackward); 
+    m_motor -> SetCommandToMovementInZDirection(PIN_MOTOR_3, LOCATION_MOTOR_3, AdafruitDCMotor::kBackward, AdafruitDCMotor::kForward); 
+    m_motor -> SetCommandToMovementInZDirection(PIN_MOTOR_4, LOCATION_MOTOR_4, AdafruitDCMotor::kBackward, AdafruitDCMotor::kForward);  
     std::cout << "Driving Forwards" << std::endl;
 
 }
@@ -37,10 +37,10 @@ void Actions4Wheels::DriveBackward(const int velocity)
         velocity: velocity in the x direction of the vehicle in the robot frame
     */
     m_motor -> SetMotorVelocity(velocity);
-    m_motor -> SetCommandToMovementInXDirection(PIN_MOTOR_1, LOCATION_MOTOR_1, AdafruitDCMotor::kBackward, AdafruitDCMotor::kForward); 
-    m_motor -> SetCommandToMovementInXDirection(PIN_MOTOR_2, LOCATION_MOTOR_2, AdafruitDCMotor::kForward, AdafruitDCMotor::kBackward); 
-    m_motor -> SetCommandToMovementInXDirection(PIN_MOTOR_3, LOCATION_MOTOR_3, AdafruitDCMotor::kBackward, AdafruitDCMotor::kForward); 
-    m_motor -> SetCommandToMovementInXDirection(PIN_MOTOR_4, LOCATION_MOTOR_4, AdafruitDCMotor::kForward, AdafruitDCMotor::kBackward); 
+    m_motor -> SetCommandToMovementInZDirection(PIN_MOTOR_1, LOCATION_MOTOR_1, AdafruitDCMotor::kBackward, AdafruitDCMotor::kForward); 
+    m_motor -> SetCommandToMovementInZDirection(PIN_MOTOR_2, LOCATION_MOTOR_2, AdafruitDCMotor::kBackward, AdafruitDCMotor::kForward); 
+    m_motor -> SetCommandToMovementInZDirection(PIN_MOTOR_3, LOCATION_MOTOR_3, AdafruitDCMotor::kForward, AdafruitDCMotor::kBackward); 
+    m_motor -> SetCommandToMovementInZDirection(PIN_MOTOR_4, LOCATION_MOTOR_4, AdafruitDCMotor::kForward, AdafruitDCMotor::kBackward);  
     std::cout << "Driving Backwards" << std::endl;
 }
 

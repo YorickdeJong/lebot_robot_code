@@ -14,6 +14,7 @@
 #include "../../support_classes/include/distance_operations.h"
 #include "../../magicNumbers/magicNumbers.h"
 #include "driver_bot_cpp/distanceData.h"
+#include <std_msgs/Float32MultiArray.h>
 
 class DataTransformationPlot{
 
@@ -23,7 +24,8 @@ class DataTransformationPlot{
 
         void DistanceCallback(const driver_bot_cpp::distanceData::ConstPtr& msg); // contains distance
         void StopNodeCallback(const std_msgs::Bool::ConstPtr& msg); // stops the node
-
+        std::vector<std_msgs::Float32MultiArray> filterAndConvertVector(std::vector<std::vector<float>>& data);
+        
         void PublishData();
 
         //TODO add callback for sonar and encoder
@@ -47,16 +49,18 @@ class DataTransformationPlot{
         double m_beginTime; 
         double m_adjustTimeToStartAtZero;
         bool m_stopNode;
+        bool m_setMotors;
         std::string m_type;
 
+        //need 4 times velocity, distance, force and energy
         std::vector<double> m_time;
-        std::vector<double> m_timeVelocity;
-        std::vector<double> m_timeEnergy;
-        std::vector<float> m_distanceForce;
-        std::vector<float> m_distance;
-        std::vector<float> m_velocity;
-        std::vector<float> m_force;
-        std::vector<float> m_energy;
+        std::vector<int> m_motorNumber;
+
+        std::vector<std::vector<float>> m_distance;
+        std::vector<std::vector<float>> m_velocity;
+        std::vector<std::vector<float>> m_force;
+        std::vector<std::vector<float>> m_energy;
+        
         DistanceOperations m_operationsDistance;
         int m_rate;
 };
